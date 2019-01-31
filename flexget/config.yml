@@ -1,0 +1,23 @@
+templates:
+  global:
+    accept_all: yes
+  transmission:
+    transmission:
+      host: transmission
+      port: 9091
+
+tasks:
+
+  adult:
+    rss: https://tp.m-team.cc/torrentrss.php?https=1&rows=10&cat430=1&cat426=1&cat432=1&cat412=1&cat436=1&sta1=1&sta6=1&pro1=1&pro3=1&pro4=1&pro5=1&pro6=1&linktype=dl&passkey=
+    template:
+      - transmission
+    set:
+      path: /downloads
+
+
+# schedules:
+#   - tasks: [movie,adult,TV,music]
+#     interval:
+#        minutes: 30
+

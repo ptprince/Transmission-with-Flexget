@@ -1,0 +1,67 @@
+
+version: "3"
+services:
+  transmission:
+    restart: unless-stopped
+    # image: linuxserver/transmission
+    build: ./transmission
+    container_name: transmission
+    ports:
+     - "51413:51413/udp"
+     - "51413:51413/tcp"
+#      - "9091:9091"
+    volumes:
+      - transmission/config:/config
+      - transmission/watch:/watch
+      - transmission/downloads:/downloads
+      - transmission/incomplete:/incomplete
+    environment:
+      - TZ=Asia/Shanghai
+      - PGID=0
+      - PUID=0
+      - VIRTUAL_HOST=localhost
+      - VIRTUAL_PORT=9091
+    # networks:
+    #   nginx-proxy:
+    #     ipv4_address: 172.21.0.20
+
+  flexget:
+    restart: unless-stopped
+    image: kmb32123/flexget-dockerfile:alpine-python3
+    container_name: flexget
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./flexget:/flexget
+      - transmission/watch:/watch
+    # network_mode: "container:transmission"
+    links:
+      - transmission:transmission
+
+  nginx:
+    restart: always
+    image: nginx:mainline
+    container_name: nginx
+    ports: 
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/well-known:/var/www/html/well-known
+    links:
+      - transmission:transmission
+      - emby:emby
+  
+  emby:
+    restart: always
+    image: emby/embyserver:latest
+    container_name: emby
+    volumes: 
+      - ./emby/config:/config
+      - transmission/downloads:/incomplete
+    environment: 
+      - UID=0
+      - GID=44
+# networks:
+#   nginx-proxy:
+#    external:
+#       name: nginx-proxy
