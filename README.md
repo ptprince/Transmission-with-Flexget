@@ -47,6 +47,25 @@ docker-compose up -d
 
 ## Web
 
+### Basic auth for nginx
+
+To use basic auth , please uncomment config file
+
+default:
+
+- user: ptpt
+- PW:  LovePT
+
+or you can generate new one
+
+```bash
+# make sure openssl was installed
+echo "{Username}:$(openssl passwd -apr1 {password})" > {Your dir}/nginx/conf.d/.htpasswd
+
+#ex: username: user1, password: password1
+echo "user1:$(openssl passwd -apr1 password1)" > {Your dir}/nginx/conf.d/.htpasswd
+```
+
 - Transmission:
 
 ```bash
@@ -58,7 +77,7 @@ http://{your ip}/tr
 ```bash
 http://{your ip}/
 ```
-s
+
 ## To Do
 
 1. Add h5ai for searchand download
