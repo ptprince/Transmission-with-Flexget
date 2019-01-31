@@ -19,7 +19,7 @@ services:
       - TZ=Asia/Shanghai
       - PGID=0
       - PUID=0
-      - VIRTUAL_HOST=localhost
+      - VIRTUAL_HOST=0.0.0.0
       - VIRTUAL_PORT=9091
     # networks:
     #   nginx-proxy:
