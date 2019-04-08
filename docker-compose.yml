@@ -47,20 +47,36 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/well-known:/var/www/html/well-known
+      - ./nginx/acme.sh:/etc/ssl/letsencrypt
     links:
       - transmission:transmission
-      - emby:emby
-  
-  emby:
+      # - emby:emby
+      - h5ai:h5ai
+      - acme-sh:acme-sh
+  # emby:
+  #   restart: always
+  #   image: emby/embyserver:latest
+  #   container_name: emby
+  #   volumes: 
+  #     - ./emby/config:/config
+  #     - ./transmission/downloads:/mnt
+  #   environment: 
+  #     - UID=0
+  #     - GID=44
+  h5ai:
     restart: always
-    image: emby/embyserver:latest
-    container_name: emby
+    image: ilemonrain/h5ai:full
+    container_name: h5ai
     volumes: 
-      - ./emby/config:/config
-      - ./transmission/downloads:/incomplete
-    environment: 
-      - UID=0
-      - GID=44
+      - ./transmission:/h5ai
+    depends_on: 
+      - transmission
+
+  acme-sh:
+    image: neilpang/acme.sh
+    command: daemon
+    volumes:
+      - ./nginx/acme.sh:/acme.sh
 # networks:
 #   nginx-proxy:
 #    external:
