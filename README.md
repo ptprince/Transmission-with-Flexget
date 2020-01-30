@@ -2,22 +2,22 @@
 
 ## Include
 
-1. Transmission with TWC
+1. qbittorrent for download
 
 1. Flexget for RSS
 
-1. nginx for proxy TR
+1. nginx for proxy qbt
 
-1. emby for play video
+1. emby or jeffylin for play video
 
 ## How to use
 
 ### Clone to your directory
 
-- Transmission will download to 
+- qbittorrent will download to
 
 ```bash
-{YOUR_DIR}/transmission/downloads
+{YOUR_DIR}/qbt/downloads
 ```
 
 ### Edit nginx config (optional)
@@ -25,7 +25,7 @@
 - add your domain and setting ssl  
 
 ```bash
-nginx/conf.d/transmission.conf
+nginx/conf.d/app.conf
 ```
 
 - add http record when you  want to add ssl
@@ -66,24 +66,39 @@ echo "{Username}:$(openssl passwd -apr1 {password})" > {Your dir}/nginx/conf.d/.
 echo "user1:$(openssl passwd -apr1 password1)" > {Your dir}/nginx/conf.d/.htpasswd
 ```
 
-- Transmission:
+- qbittorrent:
 
 ```bash
-http://{your ip}/tr
+http://{your ip}/qbt
 ```
 
-- Emby:
+set watch `/watch` for downloading
+
+- Emby or Jeffylin:
 
 ```bash
 http://{your ip}/
 ```
 
-## To Do
+- acme.sh (image only for amd64)
 
-1. Add h5ai for searchand download
+add to nginx
 
-1. Get ssl on let's Encrypt automatic
+```app.conf
+    location ~ "^/\.well-known/acme-challenge/([-_a-zA-Z0-9]+)$" {
+        default_type text/plain;
+        proxy_read_timeout    60;
+        proxy_connect_timeout 60;
+        proxy_redirect        off;
+        proxy_pass http://acme-sh;
 
-1. Change button on TWC redicrect to emby/h5ai
+        proxy_set_header      X-Real-IP $remote_addr;
+        proxy_set_header      X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto $scheme;
+        proxy_set_header      Host $host;
+    }
+```
 
-
+```bash
+docker-compose exec acme-sh acme.sh --issue -d `your domain` --standalone (--debug)
+```

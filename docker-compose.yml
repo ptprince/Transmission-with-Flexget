@@ -1,83 +1,109 @@
 
 version: "3"
 services:
-  transmission:
-    restart: unless-stopped
-    # image: linuxserver/transmission
-    build: ./transmission
-    container_name: transmission
-    ports:
-     - "51413:51413/udp"
-     - "51413:51413/tcp"
-#      - "9091:9091"
-    volumes:
-      - ./transmission/config:/config
-      - ./transmission/watch:/watch
-      - ./transmission/downloads:/downloads
-      - ./transmission/incomplete:/incomplete
+  qbittorrent:
+    image: linuxserver/qbittorrent
+    container_name: qbittorrent
     environment:
-      - TZ=Asia/Shanghai
-      - PGID=0
       - PUID=0
-      - VIRTUAL_HOST=0.0.0.0
-      - VIRTUAL_PORT=9091
-    # networks:
-    #   nginx-proxy:
-    #     ipv4_address: 172.21.0.20
+      - PGID=0
+      - TZ=Asia/Shanghai
+      - UMASK_SET=022
+      - WEBUI_PORT=8080
+    volumes:
+      - ./qbt/config:/config
+      - ./qbt/downloads:/downloads
+      - ./qbt/watch:/watch
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "3"
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    networks:
+      - pt
+
 
   flexget:
     restart: unless-stopped
-    image: kmb32123/flexget-dockerfile:alpine-python3
+#    image: kmb32123/flexget-dockerfile:alpine-python3 # for amd64
+    image: pejter/flexget:alpine # for amd64/arm64
     container_name: flexget
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./flexget:/flexget
-      - ./transmission/watch:/watch
-    # network_mode: "container:transmission"
-    links:
-      - transmission:transmission
+      - ./qbt/watch:/qbt/watch
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "3"
+    networks:
+      - pt
 
   nginx:
     restart: always
     image: nginx:mainline
     container_name: nginx
-    ports: 
+    ports:
       - 80:80
       - 443:443
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/well-known:/var/www/html/well-known
       - ./nginx/acme.sh:/etc/ssl/letsencrypt
-    links:
-      - transmission:transmission
-      # - emby:emby
-      - h5ai:h5ai
-      - acme-sh:acme-sh
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "3"
+    networks:
+      - pt
+
+  acme-sh:
+    image: neilpang/acme.sh
+    container_name: acme-sh
+    volumes:
+      - ./nginx/acme.sh:/acme.sh
+    command: daemon
+    networks:
+      - pt
+
   # emby:
   #   restart: always
   #   image: emby/embyserver:latest
   #   container_name: emby
-  #   volumes: 
+  #   volumes:
   #     - ./emby/config:/config
-  #     - ./transmission/downloads:/mnt
-  #   environment: 
-  #     - UID=0
+  #     - ./qbt/downloads:/mnt
+  #   environment:
+  #     - UID=2
   #     - GID=44
-  h5ai:
-    restart: always
-    image: ilemonrain/h5ai:full
-    container_name: h5ai
-    volumes: 
-      - ./transmission:/h5ai
-    depends_on: 
-      - transmission
+  #     - GIDLIST=1000
+  #   devices:
+  #     - /dev/dri/renderD128:/dev/dri/renderD128
+  #   networks:
+  #     - pt
 
-  acme-sh:
-    image: neilpang/acme.sh
-    command: daemon
-    volumes:
-      - ./nginx/acme.sh:/acme.sh
-# networks:
-#   nginx-proxy:
-#    external:
-#       name: nginx-proxy
+  # jellyfin:
+  #   restart: always
+  #   image: linuxserver/jellyfin:latest
+  #   container_name: jellyfin
+  #   volumes:
+  #     - ./jellyfin/config:/config
+  #     - ./jellyfin/transcode:/transcode
+  #     - ./qbt/downloads:/data
+  #   environment:
+  #     - UID=2
+  #     - GID=44
+  #     - GIDLIST=1000
+  #   devices:
+  #     - /dev/dri/renderD128:/dev/dri/renderD128
+  #   networks:
+  #     - pt
+networks:
+  pt:
+   driver: bridge
